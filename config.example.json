@@ -1,0 +1,29 @@
+{
+  "window_width": 1100,
+  "window_height": 700,
+  "default_fps": 3,
+  "default_ocr_interval_ms": 750,
+  "translator_type": "offline",
+  "ollama": {
+    "type": "ollama",
+    "base_url": "http://localhost:11434",
+    "model": "qwen2.5:7b-instruct-q4_K_M",
+    "timeout_s": 30.0
+  },
+  "deepseek": {
+    "type": "deepseek",
+    "api_key": "",
+    "base_url": "https://api.deepseek.com/v1",
+    "model": "deepseek-chat",
+    "timeout_s": 30.0
+  },
+  "baidu": {
+    "type": "baidu",
+    "app_id": "",
+    "secret_key": "",
+    "timeout_s": 30.0
+  },
+  "glossary_dir": "glossary",
+  "enable_logging": true,
+  "log_file": null
+}

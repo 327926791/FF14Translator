@@ -1,0 +1,35 @@
+# FFXIV 术语保护表 - 地名和场景
+
+# 主城区
+Limsa Lominsa
+Ul'dah
+Gridania
+Uldah
+The Waking Sands
+
+# 地区
+Eorzea
+Aldenard
+Coerthas
+The Sea of Clouds
+Othard
+The Far East
+The First
+The Crystarium
+
+# 副本/任务区域
+The Thousand Maws of Toto-Rak
+Castrum Meridianum
+The Praetorium
+Baelsar's Wall
+The Royal Menagerie
+Omega
+Rak'tika Greatwood
+Ahm Araeng
+
+# 地标
+Crystal Tower
+The Under
+Gold Saucer
+Idyllshire
+Kugane

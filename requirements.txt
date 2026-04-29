@@ -1,0 +1,9 @@
+PySide6
+mss
+Pillow
+httpx
+rapidfuzz
+winsdk
+pydantic>=2.0
+platformdirs
+

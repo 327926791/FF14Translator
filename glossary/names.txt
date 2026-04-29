@@ -1,0 +1,36 @@
+# FFXIV 术语保护表 - 人名
+# 一行一个，长词优先
+
+# 主角相关
+Warrior of Light
+Alphinaud
+Alisaie
+Tataru
+Urianger
+Thancred
+Y'shtola
+Krile
+Moenbryda
+Minfilia
+
+# 势力首领
+Raubahn
+Kan-E-Senna
+Nanamo
+
+# 反派
+Lahabrea
+Elidibus
+Igeyorhm
+Nabriales
+Thordan
+Nidhogg
+
+# 其他重要角色
+Haurchefant
+Aymeric
+Estinien
+Jacintha
+Lyse
+Raubahn
+Sultana Nanamo

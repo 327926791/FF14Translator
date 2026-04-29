@@ -1,0 +1,62 @@
+# FFXIV 术语保护表 - 特殊术语和概念
+
+# 宇宙观念
+Ascian
+Calamity
+Aether
+Tempering
+Primals
+Hypertuned
+The Tetrarch
+Dynamis
+Aetherflow
+
+# 游戏机制
+Echo
+Soul Crystal
+Limit Break
+Garlond
+Allagan
+Magitek
+Resonant
+Spell
+
+# 势力组织
+Garlean Empire
+Scions of the Seventh Dawn
+The Brass Blades
+Ul'dah Monetarists
+Syndicate
+Twin Adders
+Order of the Twin Adders
+Immortal Flames
+Maelstrom
+
+# 种族
+Hyur
+Elezen
+Lalafell
+Roegadyn
+Miqo'te
+Au Ra
+Viera
+Hrothgar
+
+# 职业相关
+Paladin
+Warrior
+Dragoon
+Monk
+Samurai
+Ninja
+Bard
+Machinist
+Dancer
+White Mage
+Scholar
+Astrologian
+Sage
+Black Mage
+Summoner
+Red Mage
+Blue Mage
