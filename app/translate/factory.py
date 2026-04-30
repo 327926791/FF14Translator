@@ -7,11 +7,15 @@ from app.translate.base import (
     TranslatorType,
     OllamaConfig,
     DeepSeekConfig,
+    QwenConfig,
+    QwenMtConfig,
     BaiduConfig,
     TranslatorConfig,
 )
 from app.translate.ollama import OllamaTranslator
 from app.translate.deepseek import DeepSeekTranslator
+from app.translate.qwen import QwenTranslator
+from app.translate.qwen_mt import QwenMtTranslator
 from app.translate.baidu import BaiduTranslator
 
 
@@ -42,7 +46,17 @@ class TranslatorFactory:
                 if not isinstance(cfg, DeepSeekConfig):
                     raise ValueError("DeepSeek translator requires DeepSeekConfig")
                 return DeepSeekTranslator(cfg)
-            
+
+            elif cfg.type == TranslatorType.QWEN:
+                if not isinstance(cfg, QwenConfig):
+                    raise ValueError("Qwen translator requires QwenConfig")
+                return QwenTranslator(cfg)
+
+            elif cfg.type == TranslatorType.QWEN_MT:
+                if not isinstance(cfg, QwenMtConfig):
+                    raise ValueError("QwenMt translator requires QwenMtConfig")
+                return QwenMtTranslator(cfg)
+
             elif cfg.type == TranslatorType.BAIDU:
                 if not isinstance(cfg, BaiduConfig):
                     raise ValueError("Baidu translator requires BaiduConfig")

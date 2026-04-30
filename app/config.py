@@ -32,6 +32,34 @@ class DeepSeekConfigModel(BaseModel):
     timeout_s: float = Field(default=30.0, description="超时时间（秒）")
 
 
+class QwenConfigModel(BaseModel):
+    """通义千问通用聊天模型配置（qwen-flash / qwen-plus 等）"""
+    model_config = ConfigDict(use_attribute_docstrings=True)
+
+    type: str = Field(default="qwen", description="翻译器类型")
+    api_key: str = Field(default="", description="API Key")
+    base_url: str = Field(
+        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        description="API 地址",
+    )
+    model: str = Field(default="qwen-flash", description="模型名称（qwen-flash 推荐）")
+    timeout_s: float = Field(default=30.0, description="超时时间（秒）")
+
+
+class QwenMtConfigModel(BaseModel):
+    """Qwen-MT 专用翻译模型配置（qwen-mt-flash / qwen-mt-plus）"""
+    model_config = ConfigDict(use_attribute_docstrings=True)
+
+    type: str = Field(default="qwen_mt", description="翻译器类型")
+    api_key: str = Field(default="", description="API Key（与通义千问共用同一个）")
+    base_url: str = Field(
+        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        description="API 地址",
+    )
+    model: str = Field(default="qwen-mt-flash", description="模型（qwen-mt-flash 推荐）")
+    timeout_s: float = Field(default=30.0, description="超时时间（秒）")
+
+
 class BaiduConfigModel(BaseModel):
     """百度翻译 API 配置"""
     model_config = ConfigDict(use_attribute_docstrings=True)
@@ -55,9 +83,11 @@ class AppConfig(BaseModel):
     default_ocr_interval_ms: int = Field(default=750, description="默认 OCR 间隔（毫秒）", ge=250, le=5000)
     
     # 翻译配置
-    translator_type: str = Field(default="offline", description="翻译器类型（ollama/deepseek/baidu/offline）")
+    translator_type: str = Field(default="offline", description="翻译器类型（ollama/deepseek/qwen/qwen_mt/baidu/offline）")
     ollama: OllamaConfigModel = Field(default_factory=OllamaConfigModel, description="Ollama 配置")
     deepseek: DeepSeekConfigModel = Field(default_factory=DeepSeekConfigModel, description="DeepSeek 配置")
+    qwen: QwenConfigModel = Field(default_factory=QwenConfigModel, description="通义千问通用模型配置")
+    qwen_mt: QwenMtConfigModel = Field(default_factory=QwenMtConfigModel, description="Qwen-MT 专用翻译模型配置")
     baidu: BaiduConfigModel = Field(default_factory=BaiduConfigModel, description="百度翻译配置")
     
     # 术语表目录

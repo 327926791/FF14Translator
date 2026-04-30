@@ -10,6 +10,8 @@ class TranslatorType(str, Enum):
     """翻译后端类型枚举"""
     OLLAMA = "ollama"
     DEEPSEEK = "deepseek"
+    QWEN = "qwen"
+    QWEN_MT = "qwen_mt"  # 专用翻译模型（qwen-mt-flash / qwen-mt-plus）
     BAIDU = "baidu"
     OFFLINE = "offline"  # 离线模式（暂不翻译）
 
@@ -36,6 +38,30 @@ class DeepSeekConfig(TranslatorConfig):
     base_url: str = "https://api.deepseek.com/v1"
     model: str = "deepseek-chat"
     type: TranslatorType = TranslatorType.DEEPSEEK
+
+
+@dataclass(frozen=True)
+class QwenConfig(TranslatorConfig):
+    """通义千问通用聊天模型配置（qwen-flash / qwen-plus / qwen-max 等）"""
+    api_key: str = ""
+    base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: str = "qwen-flash"  # qwen-turbo 已停止更新，官方推荐 qwen-flash
+    type: TranslatorType = TranslatorType.QWEN
+
+
+@dataclass(frozen=True)
+class QwenMtConfig(TranslatorConfig):
+    """Qwen-MT 专用翻译模型配置（qwen-mt-flash / qwen-mt-plus）
+
+    特点：专为翻译场景 fine-tune，比通用聊天模型质量更高，且更便宜。
+    注意：不支持 system message，通过 translation_options 指定语言。
+    """
+    api_key: str = ""
+    base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: str = "qwen-mt-flash"
+    source_lang: str = "en"
+    target_lang: str = "zh"
+    type: TranslatorType = TranslatorType.QWEN_MT
 
 
 @dataclass(frozen=True)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import random
-import time
 from typing import Optional
 
 import httpx
@@ -25,20 +24,21 @@ class BaiduTranslator(BaseTranslator):
             raise ValueError("Baidu app_id and secret_key are required")
         self.cfg = cfg
 
-    @staticmethod
-    def _gen_sign(query: str, salt: int, secret_key: str) -> str:
-        """生成百度翻译 sign"""
-        sign_str = f"{secret_key}{query}{salt}{secret_key}"
+    def _gen_sign(self, query: str, salt: int) -> str:
+        """生成百度翻译 sign：MD5(appid + q + salt + secret_key)"""
+        sign_str = f"{self.cfg.app_id}{query}{salt}{self.cfg.secret_key}"
         return hashlib.md5(sign_str.encode("utf-8")).hexdigest()
 
     def translate(self, speaker: str, text: str, protected_note: Optional[str] = None) -> str:
-        """调用百度翻译 API"""
-        # 百度翻译的特点：直接翻译，无法传系统 prompt
-        # 所以我们将指令编入 query
-        query = f"Translate this English dialogue into Simplified Chinese. Keep placeholders like __TERM_XXX__ unchanged. Keep speaker name: {speaker} unchanged. Output ONLY the translated text, no quotes or explanations. Dialogue: {text}"
-        
+        """调用百度翻译 API。
+
+        百度通用翻译 API 不支持系统 prompt，所以直接翻译保护后的文本。
+        __TERM_XXX__ 占位符会被翻译成乱码，因此对百度后端跳过术语保护，
+        由调用层在收到结果后再做中文→原文的二次替换（见 worker.py）。
+        """
+        query = text
         salt = random.randint(32768, 65536)
-        sign = self._gen_sign(query, salt, self.cfg.secret_key)
+        sign = self._gen_sign(query, salt)
         
         url = "https://api.fanyi.baidu.com/api/trans/vip/translate"
         params = {
@@ -71,10 +71,9 @@ class BaiduTranslator(BaseTranslator):
     def health_check(self) -> bool:
         """检查百度翻译 API 是否可用"""
         try:
-            # 简单的健康检查：发一个测试翻译请求
             query = "test"
             salt = random.randint(32768, 65536)
-            sign = self._gen_sign(query, salt, self.cfg.secret_key)
+            sign = self._gen_sign(query, salt)
             
             url = "https://api.fanyi.baidu.com/api/trans/vip/translate"
             params = {
