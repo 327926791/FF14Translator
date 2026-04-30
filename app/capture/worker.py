@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from PySide6.QtCore import QThread, Signal
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageChops, ImageEnhance, ImageOps, ImageStat
 from rapidfuzz import fuzz
 
 from app.capture.screen_capture import ScreenCapturer, ScreenRect
@@ -129,6 +129,7 @@ class CaptureWorker(QThread):
         last_ocr_at = 0.0
         last_text_norm = ""
         recent_norm: deque[str] = deque(maxlen=20)
+        last_img_gray: Optional[Image.Image] = None   # 上一帧灰度图，用于图像差异判断
 
         translator = _build_translator(self._cfg.translator_type, self._cfg.translator_config)
         if translator is not None:
@@ -156,6 +157,13 @@ class CaptureWorker(QThread):
                 try:
                     left, top, width, height = self._cfg.roi_screen
                     img = capturer.grab(ScreenRect(left=left, top=top, width=width, height=height))
+                    # ---- 图像差异过滤（省 OCR + API）----
+                    img_gray = img.convert("L")
+                    if last_img_gray is not None and _images_similar(img_gray, last_img_gray):
+                        time.sleep(frame_sleep)
+                        continue
+                    last_img_gray = img_gray
+                    # ------------------------------------
                     img_pp = _preprocess_for_ocr(img)
                     text = loop.run_until_complete(ocr.recognize_pil(img_pp))
                 except Exception as e:
@@ -224,6 +232,26 @@ def _preprocess_for_ocr(img: Image.Image) -> Image.Image:
     bw = g.point(lambda p: 255 if p > 160 else 0)
     bw = bw.resize((bw.width * 2, bw.height * 2))
     return bw
+
+
+def _images_similar(
+    img1: Image.Image,
+    img2: Image.Image,
+    threshold: float = 3.0,
+) -> bool:
+    """
+    判断两帧灰度截图是否"基本相同"（文字内容无明显变化）。
+
+    使用差值图的标准差作为衡量指标，比均值更敏感地捕捉局部文字变化：
+      - 同一帧 / 极小噪声  →  stddev ≈ 0–0.1
+      - 新对话出现         →  stddev ≈ 10+
+      - threshold=3.0 留有充足缓冲，不会误判
+    """
+    if img1.size != img2.size:
+        return False
+    diff = ImageChops.difference(img1, img2)
+    stddev: float = ImageStat.Stat(diff).stddev[0]
+    return stddev < threshold
 
 
 def _normalize_ocr_text(text: str) -> str:
