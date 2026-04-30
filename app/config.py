@@ -33,16 +33,16 @@ class DeepSeekConfigModel(BaseModel):
 
 
 class QwenConfigModel(BaseModel):
-    """通义千问通用聊天模型配置（qwen-flash / qwen-plus 等）"""
+    """通义千问通用聊天模型配置"""
     model_config = ConfigDict(use_attribute_docstrings=True)
 
     type: str = Field(default="qwen", description="翻译器类型")
     api_key: str = Field(default="", description="API Key")
     base_url: str = Field(
-        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        description="API 地址",
+        default="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        description="API 地址（见选项卡说明选对应区域）",
     )
-    model: str = Field(default="qwen-flash", description="模型名称（qwen-flash 推荐）")
+    model: str = Field(default="qwen-flash", description="模型名称")
     timeout_s: float = Field(default=30.0, description="超时时间（秒）")
 
 
@@ -53,8 +53,22 @@ class QwenMtConfigModel(BaseModel):
     type: str = Field(default="qwen_mt", description="翻译器类型")
     api_key: str = Field(default="", description="API Key（与通义千问共用同一个）")
     base_url: str = Field(
-        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        description="API 地址",
+        default="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        description="API 地址（Singapore / 国内 / 香港 可用 Qwen-MT）",
+    )
+    model: str = Field(default="qwen-mt-flash", description="模型（qwen-mt-flash 推荐）")
+    timeout_s: float = Field(default=30.0, description="超时时间（秒）")
+
+
+class QwenMtConfigModel(BaseModel):
+    """Qwen-MT 专用翻译模型配置（qwen-mt-flash / qwen-mt-plus）"""
+    model_config = ConfigDict(use_attribute_docstrings=True)
+
+    type: str = Field(default="qwen_mt", description="翻译器类型")
+    api_key: str = Field(default="", description="API Key（与通义千问共用同一个）")
+    base_url: str = Field(
+        default="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        description="API 地址（国际站用 dashscope-intl，国内站用 dashscope）",
     )
     model: str = Field(default="qwen-mt-flash", description="模型（qwen-mt-flash 推荐）")
     timeout_s: float = Field(default=30.0, description="超时时间（秒）")

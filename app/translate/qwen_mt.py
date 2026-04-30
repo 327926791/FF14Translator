@@ -70,13 +70,36 @@ class QwenMtTranslator(BaseTranslator):
             raise RuntimeError(f"Qwen-MT 翻译失败：{str(e)}") from e
 
     def health_check(self) -> bool:
-        """检查百炼 API 是否可用"""
+        """检查百炼 MT API 是否可用（翻译一个单词验证，消耗极少 token）。
+        失败时抛出 RuntimeError，消息即为具体原因。
+        """
+        url = self.cfg.base_url.rstrip("/") + "/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.cfg.api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": self.cfg.model,
+            "messages": [{"role": "user", "content": "test"}],
+            "translation_options": {
+                "source_lang": self.cfg.source_lang,
+                "target_lang": self.cfg.target_lang,
+            },
+            "max_tokens": 4,
+        }
         try:
-            url = self.cfg.base_url.rstrip("/") + "/models"
-            headers = {"Authorization": f"Bearer {self.cfg.api_key}"}
-            with httpx.Client(timeout=5.0) as client:
-                r = client.get(url, headers=headers)
+            with httpx.Client(timeout=10.0) as client:
+                r = client.post(url, headers=headers, json=payload)
                 r.raise_for_status()
                 return True
-        except Exception:
-            return False
+        except httpx.HTTPStatusError as e:
+            detail = f"HTTP {e.response.status_code}"
+            try:
+                detail = e.response.json().get("error", {}).get("message", detail)
+            except Exception:
+                pass
+            raise RuntimeError(f"API 返回错误：{detail}") from e
+        except httpx.ConnectError as e:
+            raise RuntimeError(f"无法连接到服务器，请检查网络或 API 地址：{e}") from e
+        except Exception as e:
+            raise RuntimeError(f"连接检查失败：{e}") from e

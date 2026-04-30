@@ -161,14 +161,21 @@ class MainWindow(QMainWindow):
         self.txt_qwen_mt_key.setText(self._config.qwen_mt.api_key)
         self.txt_qwen_mt_model = QLineEdit(tab_qwen_mt)
         self.txt_qwen_mt_model.setText(self._config.qwen_mt.model)
+        self.txt_qwen_mt_url = QLineEdit(tab_qwen_mt)
+        self.txt_qwen_mt_url.setText(self._config.qwen_mt.base_url)
         fl_qwen_mt.addRow("API Key：", self.txt_qwen_mt_key)
         fl_qwen_mt.addRow("模型名称：", self.txt_qwen_mt_model)
+        fl_qwen_mt.addRow("API 地址：", self.txt_qwen_mt_url)
         lbl_qwen_mt_hint = QLabel(
-            "✅ <b>推荐用于 FF14 翻译</b><br>"
-            "专为翻译场景 fine-tune，比通用模型质量更高、更便宜。<br>"
-            "• <b>qwen-mt-flash</b>（默认，快速低成本）<br>"
-            "• <b>qwen-mt-plus</b>（最高质量）<br>"
-            "💡 <a href=\"https://bailian.console.aliyun.com/\">阿里云百炼平台</a>获取 API Key（新用户 100 万 Token 免费）",
+            "✅ <b>推荐用于 FF14 翻译</b>，专为翻译场景 fine-tune。<br>"
+            "• <b>qwen-mt-flash</b>（默认，快速低成本）&nbsp;&nbsp;• <b>qwen-mt-plus</b>（最高质量）<br>"
+            "<b>各区域 API 地址：</b><br>"
+            "🌐 Singapore → <tt>https://dashscope-intl.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "🇨🇳 国内 → <tt>https://dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "🇭🇰 香港 → <tt>https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "⚠️ US (Virginia) 区不支持 Qwen-MT，请换用「千问 Qwen」选项卡<br>"
+            "💡 <a href=\"https://modelstudio.console.alibabacloud.com/\">国际注册</a> / "
+            "<a href=\"https://bailian.console.aliyun.com/\">国内注册</a>（新用户 100 万 Token 免费）",
             tab_qwen_mt,
         )
         lbl_qwen_mt_hint.setOpenExternalLinks(True)
@@ -187,12 +194,19 @@ class MainWindow(QMainWindow):
         self.txt_qwen_key.setEchoMode(QLineEdit.Password)
         self.txt_qwen_model = QLineEdit(tab_qwen)
         self.txt_qwen_model.setText(self._config.qwen.model)
+        self.txt_qwen_url = QLineEdit(tab_qwen)
+        self.txt_qwen_url.setText(self._config.qwen.base_url)
         fl_qwen.addRow("API Key：", self.txt_qwen_key)
         fl_qwen.addRow("模型名称：", self.txt_qwen_model)
+        fl_qwen.addRow("API 地址：", self.txt_qwen_url)
         lbl_qwen_hint = QLabel(
-            "💡 免费获取 API Key（新用户 100 万 Token）：<br>"
-            "<a href=\"https://bailian.console.aliyun.com/\">阿里云百炼平台</a><br>"
-            "推荐模型：<b>qwen-turbo</b>（速度快、成本低）",
+            "推荐模型：<b>qwen-flash</b>（Singapore/国内）或 <b>qwen-flash-us</b>（US 区）<br>"
+            "<b>各区域 API 地址：</b><br>"
+            "🇺🇸 US (Virginia) → <tt>https://dashscope-us.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "　　　模型需加 <b>-us</b> 后缀：<tt>qwen-flash-us</tt>、<tt>qwen-plus-us</tt><br>"
+            "🌐 Singapore → <tt>https://dashscope-intl.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "🇨🇳 国内 → <tt>https://dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "🇭🇰 香港 → <tt>https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1</tt>",
             tab_qwen,
         )
         lbl_qwen_hint.setOpenExternalLinks(True)
@@ -332,14 +346,13 @@ class MainWindow(QMainWindow):
             cfg = QwenMtConfig(
                 api_key=self.txt_qwen_mt_key.text().strip(),
                 model=self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
+                base_url=self.txt_qwen_mt_url.text().strip(),
             )
             translator = QwenMtTranslator(cfg)
-            if translator.health_check():
-                QMessageBox.information(self, "成功", "✅ 千问 MT API 连接正常")
-            else:
-                QMessageBox.warning(self, "失败", "❌ 无法连接，请检查 API Key")
+            translator.health_check()
+            QMessageBox.information(self, "成功", "✅ 千问 MT API 连接正常")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"❌ 检查失败：{e}")
+            QMessageBox.critical(self, "连接失败", f"❌ {e}")
 
     @Slot()
     def _check_qwen_connection(self) -> None:
@@ -349,15 +362,23 @@ class MainWindow(QMainWindow):
         try:
             cfg = QwenConfig(
                 api_key=self.txt_qwen_key.text().strip(),
-                model=self.txt_qwen_model.text().strip(),
+                model=self.txt_qwen_model.text().strip() or "qwen-flash",
+                base_url=self.txt_qwen_url.text().strip(),
             )
             translator = QwenTranslator(cfg)
-            if translator.health_check():
-                QMessageBox.information(self, "成功", "✅ 通义千问 API 连接正常")
-            else:
-                QMessageBox.warning(self, "失败", "❌ 无法连接到通义千问 API，请检查 API Key")
+            translator.health_check()
+            QMessageBox.information(self, "成功", "✅ 通义千问 API 连接正常")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"❌ 检查失败：{e}")
+            QMessageBox.critical(self, "连接失败", f"❌ {e}")
+            cfg = QwenConfig(
+                api_key=self.txt_qwen_key.text().strip(),
+                model=self.txt_qwen_model.text().strip() or "qwen-flash",
+            )
+            translator = QwenTranslator(cfg)
+            translator.health_check()
+            QMessageBox.information(self, "成功", "✅ 通义千问 API 连接正常")
+        except Exception as e:
+            QMessageBox.critical(self, "连接失败", f"❌ {e}")
 
     @Slot()
     def _check_ollama_connection(self) -> None:
@@ -509,6 +530,7 @@ class MainWindow(QMainWindow):
             translator_config = {
                 "api_key": self.txt_qwen_mt_key.text().strip(),
                 "model": self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
+                "base_url": self.txt_qwen_mt_url.text().strip(),
             }
         elif translator_type == "qwen":
             if not self.txt_qwen_key.text().strip():
@@ -517,6 +539,7 @@ class MainWindow(QMainWindow):
             translator_config = {
                 "api_key": self.txt_qwen_key.text().strip(),
                 "model": self.txt_qwen_model.text().strip() or "qwen-flash",
+                "base_url": self.txt_qwen_url.text().strip(),
             }
         elif translator_type == "deepseek":
             if not self.txt_deepseek_key.text().strip():
@@ -595,8 +618,10 @@ class MainWindow(QMainWindow):
         self._config.ollama.model = self.txt_ollama_model.text().strip()
         self._config.qwen_mt.api_key = self.txt_qwen_mt_key.text().strip()
         self._config.qwen_mt.model = self.txt_qwen_mt_model.text().strip()
+        self._config.qwen_mt.base_url = self.txt_qwen_mt_url.text().strip()
         self._config.qwen.api_key = self.txt_qwen_key.text().strip()
         self._config.qwen.model = self.txt_qwen_model.text().strip()
+        self._config.qwen.base_url = self.txt_qwen_url.text().strip()
         self._config.deepseek.api_key = self.txt_deepseek_key.text().strip()
         self._config.deepseek.base_url = self.txt_deepseek_url.text().strip()
         self._config.baidu.app_id = self.txt_baidu_app_id.text().strip()
