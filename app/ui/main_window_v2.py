@@ -6,7 +6,6 @@ from typing import Optional
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QComboBox,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -22,13 +21,10 @@ from PySide6.QtWidgets import (
     QSplitter,
     QVBoxLayout,
     QWidget,
-    QTabWidget,
 )
 
 from app.capture.worker import CaptureConfig, CaptureWorker
 from app.config import get_config, set_config, AppConfig
-from app.translate.base import TranslatorType
-from app.translate.factory import TranslatorFactory
 from app.ui.roi_select import RoiSelectDialog
 from app.win.window_finder import find_ffxiv_windows
 
@@ -44,8 +40,8 @@ class RoiRect:
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("FFXIV 实时翻译（改进版）")
-        
+        self.setWindowTitle("FFXIV 实时翻译")
+
         self._config = get_config()
         self.resize(self._config.window_width, self._config.window_height)
 
@@ -67,6 +63,7 @@ class MainWindow(QMainWindow):
         # ===== 目标窗口 =====
         gb_window = QGroupBox("目标窗口", left)
         fl_window = QFormLayout(gb_window)
+        from PySide6.QtWidgets import QComboBox
         self.cmb_windows = QComboBox(gb_window)
         self.btn_refresh_windows = QPushButton("刷新", gb_window)
         self.btn_bind_window = QPushButton("绑定", gb_window)
@@ -101,148 +98,39 @@ class MainWindow(QMainWindow):
         fl_roi.addRow("捕获 FPS：", self.spn_fps)
         fl_roi.addRow("OCR 间隔(ms)：", self.spn_ocr_ms)
 
-        # ===== 翻译设置（选项卡） =====
-        gb_translate = QGroupBox("翻译服务（可选）", left)
-        translate_layout = QVBoxLayout(gb_translate)
-        
-        # 翻译类型选择
-        type_row = QWidget(gb_translate)
-        type_row_l = QHBoxLayout(type_row)
-        type_row_l.setContentsMargins(0, 0, 0, 0)
-        type_row_l.addWidget(QLabel("翻译类型："))
-        self.cmb_translator_type = QComboBox(type_row)
-        self.cmb_translator_type.addItems(["离线（不翻译）", "Ollama（本地）", "千问MT（推荐）", "通义千问 Qwen", "DeepSeek API", "百度翻译"])
-        self.cmb_translator_type.setCurrentText(self._translate_type_to_label(self._config.translator_type))
-        self.cmb_translator_type.currentTextChanged.connect(self._on_translator_type_changed)
-        type_row_l.addWidget(self.cmb_translator_type)
-        type_row_l.addStretch(1)
-        translate_layout.addWidget(type_row)
-        
-        # 创建选项卡用于不同翻译器的设置
-        self.tabs_translator = QTabWidget(gb_translate)
-        
-        # Ollama 选项卡
-        tab_ollama = QWidget(self.tabs_translator)
-        fl_ollama = QFormLayout(tab_ollama)
-        self.txt_ollama_url = QLineEdit(tab_ollama)
-        self.txt_ollama_url.setText(self._config.ollama.base_url)
-        self.txt_ollama_model = QLineEdit(tab_ollama)
-        self.txt_ollama_model.setText(self._config.ollama.model)
-        fl_ollama.addRow("Ollama 地址：", self.txt_ollama_url)
-        fl_ollama.addRow("模型名：", self.txt_ollama_model)
-        self.btn_check_ollama = QPushButton("检查连接", tab_ollama)
-        self.btn_check_ollama.clicked.connect(self._check_ollama_connection)
-        fl_ollama.addRow(self.btn_check_ollama)
-        self.tabs_translator.addTab(tab_ollama, "Ollama")
-        
-        # DeepSeek 选项卡
-        tab_deepseek = QWidget(self.tabs_translator)
-        fl_deepseek = QFormLayout(tab_deepseek)
-        self.txt_deepseek_key = QLineEdit(tab_deepseek)
-        self.txt_deepseek_key.setText(self._config.deepseek.api_key)
-        self.txt_deepseek_key.setEchoMode(QLineEdit.Password)
-        self.txt_deepseek_url = QLineEdit(tab_deepseek)
-        self.txt_deepseek_url.setText(self._config.deepseek.base_url)
-        fl_deepseek.addRow("API 密钥：", self.txt_deepseek_key)
-        fl_deepseek.addRow("API 地址：", self.txt_deepseek_url)
-        lbl_deepseek_hint = QLabel(
-            "💡 获取免费 API 密钥：<a href=\"https://api.deepseek.com\">https://api.deepseek.com</a>",
-            tab_deepseek
-        )
-        lbl_deepseek_hint.setOpenExternalLinks(True)
-        lbl_deepseek_hint.setWordWrap(True)
-        fl_deepseek.addRow(lbl_deepseek_hint)
-        self.tabs_translator.addTab(tab_deepseek, "DeepSeek")
-        
-        # 千问 MT 专用翻译模型选项卡（推荐）
-        tab_qwen_mt = QWidget(self.tabs_translator)
-        fl_qwen_mt = QFormLayout(tab_qwen_mt)
-        self.txt_qwen_mt_key = QLineEdit(tab_qwen_mt)
+        # ===== 千问 MT 翻译配置 =====
+        gb_translate = QGroupBox("翻译服务（千问 MT）", left)
+        fl_tr = QFormLayout(gb_translate)
+
+        self.txt_qwen_mt_key = QLineEdit(gb_translate)
         self.txt_qwen_mt_key.setEchoMode(QLineEdit.Password)
+        self.txt_qwen_mt_key.setPlaceholderText("sk-xxxx…")
         self.txt_qwen_mt_key.setText(self._config.qwen_mt.api_key)
-        self.txt_qwen_mt_model = QLineEdit(tab_qwen_mt)
+
+        self.txt_qwen_mt_model = QLineEdit(gb_translate)
+        self.txt_qwen_mt_model.setPlaceholderText("qwen-mt-flash")
         self.txt_qwen_mt_model.setText(self._config.qwen_mt.model)
-        self.txt_qwen_mt_url = QLineEdit(tab_qwen_mt)
+
+        self.txt_qwen_mt_url = QLineEdit(gb_translate)
         self.txt_qwen_mt_url.setText(self._config.qwen_mt.base_url)
-        fl_qwen_mt.addRow("API Key：", self.txt_qwen_mt_key)
-        fl_qwen_mt.addRow("模型名称：", self.txt_qwen_mt_model)
-        fl_qwen_mt.addRow("API 地址：", self.txt_qwen_mt_url)
-        lbl_qwen_mt_hint = QLabel(
-            "✅ <b>推荐用于 FF14 翻译</b>，专为翻译场景 fine-tune。<br>"
-            "• <b>qwen-mt-flash</b>（默认，快速低成本）&nbsp;&nbsp;• <b>qwen-mt-plus</b>（最高质量）<br>"
-            "<b>各区域 API 地址：</b><br>"
-            "🌐 Singapore → <tt>https://dashscope-intl.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "🇨🇳 国内 → <tt>https://dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "🇭🇰 香港 → <tt>https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "⚠️ US (Virginia) 区不支持 Qwen-MT，请换用「千问 Qwen」选项卡<br>"
-            "💡 <a href=\"https://modelstudio.console.alibabacloud.com/\">国际注册</a> / "
-            "<a href=\"https://bailian.console.aliyun.com/\">国内注册</a>（新用户 100 万 Token 免费）",
-            tab_qwen_mt,
+
+        fl_tr.addRow("API Key：", self.txt_qwen_mt_key)
+        fl_tr.addRow("模型：", self.txt_qwen_mt_model)
+        fl_tr.addRow("API 地址：", self.txt_qwen_mt_url)
+
+        lbl_hint = QLabel(
+            "• <b>qwen-mt-flash</b>（快速低成本）　• <b>qwen-mt-plus</b>（最高质量）<br>"
+            "新加坡区：<tt>https://dashscope-intl.aliyuncs.com/compatible-mode/v1</tt><br>"
+            "国内区：<tt>https://dashscope.aliyuncs.com/compatible-mode/v1</tt>",
+            gb_translate,
         )
-        lbl_qwen_mt_hint.setOpenExternalLinks(True)
-        lbl_qwen_mt_hint.setWordWrap(True)
-        fl_qwen_mt.addRow(lbl_qwen_mt_hint)
-        self.btn_check_qwen_mt = QPushButton("检查连接", tab_qwen_mt)
+        lbl_hint.setOpenExternalLinks(True)
+        lbl_hint.setWordWrap(True)
+        fl_tr.addRow(lbl_hint)
+
+        self.btn_check_qwen_mt = QPushButton("检查连接", gb_translate)
         self.btn_check_qwen_mt.clicked.connect(self._check_qwen_mt_connection)
-        fl_qwen_mt.addRow(self.btn_check_qwen_mt)
-        self.tabs_translator.addTab(tab_qwen_mt, "千问MT ⭐")
-
-        # 通义千问选项卡
-        tab_qwen = QWidget(self.tabs_translator)
-        fl_qwen = QFormLayout(tab_qwen)
-        self.txt_qwen_key = QLineEdit(tab_qwen)
-        self.txt_qwen_key.setText(self._config.qwen.api_key)
-        self.txt_qwen_key.setEchoMode(QLineEdit.Password)
-        self.txt_qwen_model = QLineEdit(tab_qwen)
-        self.txt_qwen_model.setText(self._config.qwen.model)
-        self.txt_qwen_url = QLineEdit(tab_qwen)
-        self.txt_qwen_url.setText(self._config.qwen.base_url)
-        fl_qwen.addRow("API Key：", self.txt_qwen_key)
-        fl_qwen.addRow("模型名称：", self.txt_qwen_model)
-        fl_qwen.addRow("API 地址：", self.txt_qwen_url)
-        lbl_qwen_hint = QLabel(
-            "推荐模型：<b>qwen-flash</b>（Singapore/国内）或 <b>qwen-flash-us</b>（US 区）<br>"
-            "<b>各区域 API 地址：</b><br>"
-            "🇺🇸 US (Virginia) → <tt>https://dashscope-us.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "　　　模型需加 <b>-us</b> 后缀：<tt>qwen-flash-us</tt>、<tt>qwen-plus-us</tt><br>"
-            "🌐 Singapore → <tt>https://dashscope-intl.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "🇨🇳 国内 → <tt>https://dashscope.aliyuncs.com/compatible-mode/v1</tt><br>"
-            "🇭🇰 香港 → <tt>https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1</tt>",
-            tab_qwen,
-        )
-        lbl_qwen_hint.setOpenExternalLinks(True)
-        lbl_qwen_hint.setWordWrap(True)
-        fl_qwen.addRow(lbl_qwen_hint)
-        self.btn_check_qwen = QPushButton("检查连接", tab_qwen)
-        self.btn_check_qwen.clicked.connect(self._check_qwen_connection)
-        fl_qwen.addRow(self.btn_check_qwen)
-        self.tabs_translator.addTab(tab_qwen, "千问 Qwen")
-
-        # 百度翻译选项卡
-        tab_baidu = QWidget(self.tabs_translator)
-        fl_baidu = QFormLayout(tab_baidu)
-        self.txt_baidu_app_id = QLineEdit(tab_baidu)
-        self.txt_baidu_app_id.setText(self._config.baidu.app_id)
-        self.txt_baidu_secret = QLineEdit(tab_baidu)
-        self.txt_baidu_secret.setText(self._config.baidu.secret_key)
-        self.txt_baidu_secret.setEchoMode(QLineEdit.Password)
-        fl_baidu.addRow("APP ID：", self.txt_baidu_app_id)
-        fl_baidu.addRow("密钥：", self.txt_baidu_secret)
-        lbl_baidu_hint = QLabel(
-            "💡 申请免费账号：<a href=\"https://api.fanyi.baidu.com\">https://api.fanyi.baidu.com</a><br>"
-            "免费额度：每月 2M 字符",
-            tab_baidu
-        )
-        lbl_baidu_hint.setOpenExternalLinks(True)
-        lbl_baidu_hint.setWordWrap(True)
-        fl_baidu.addRow(lbl_baidu_hint)
-        self.tabs_translator.addTab(tab_baidu, "百度翻译")
-        
-        translate_layout.addWidget(self.tabs_translator)
-        
-        self.lbl_tr_status = QLabel("翻译：离线模式（仅显示原文）", gb_translate)
-        self.lbl_tr_status.setWordWrap(True)
-        translate_layout.addWidget(self.lbl_tr_status)
+        fl_tr.addRow(self.btn_check_qwen_mt)
 
         # ===== 控制按钮 =====
         gb_ctrl = QGroupBox("控制", left)
@@ -271,7 +159,7 @@ class MainWindow(QMainWindow):
         right_layout = QVBoxLayout(right)
         self.txt_log = QPlainTextEdit(right)
         self.txt_log.setReadOnly(True)
-        self.txt_log.setPlaceholderText("这里会持续追加识别/翻译出来的台词记录…")
+        self.txt_log.setPlaceholderText("识别 / 翻译的台词将持续追加在这里…")
         right_layout.addWidget(self.txt_log, 1)
 
         splitter.setStretchFactor(0, 0)
@@ -283,10 +171,7 @@ class MainWindow(QMainWindow):
         # ===== 菜单 =====
         act_about = QAction("关于", self)
         act_about.triggered.connect(self._about)
-        act_docs = QAction("快速开始", self)
-        act_docs.triggered.connect(self._show_quick_start)
         self.menuBar().addAction(act_about)
-        self.menuBar().addAction(act_docs)
 
         # ===== 信号连接 =====
         self.btn_refresh_windows.clicked.connect(self._refresh_windows)
@@ -299,48 +184,13 @@ class MainWindow(QMainWindow):
         self.btn_save_config.clicked.connect(self._save_config)
 
         self._refresh_windows()
-        self._update_translator_status()
 
-    @staticmethod
-    def _translate_type_to_label(type_str: str) -> str:
-        """将翻译类型转换为标签"""
-        mapping = {
-            "offline": "离线（不翻译）",
-            "ollama": "Ollama（本地）",
-            "qwen_mt": "千问MT（推荐）",
-            "qwen": "通义千问 Qwen",
-            "deepseek": "DeepSeek API",
-            "baidu": "百度翻译",
-        }
-        return mapping.get(type_str, "离线（不翻译）")
-
-    @staticmethod
-    def _label_to_translate_type(label: str) -> str:
-        """将标签转换为翻译类型"""
-        mapping = {
-            "离线（不翻译）": "offline",
-            "Ollama（本地）": "ollama",
-            "千问MT（推荐）": "qwen_mt",
-            "通义千问 Qwen": "qwen",
-            "DeepSeek API": "deepseek",
-            "百度翻译": "baidu",
-        }
-        return mapping.get(label, "offline")
-
-    _TAB_INDEX = {"ollama": 0, "qwen_mt": 1, "qwen": 2, "deepseek": 3, "baidu": 4}
-
-    @Slot(str)
-    def _on_translator_type_changed(self, label: str) -> None:
-        """翻译器类型改变时同步切换选项卡"""
-        translator_type = self._label_to_translate_type(label)
-        idx = self._TAB_INDEX.get(translator_type)
-        if idx is not None:
-            self.tabs_translator.setCurrentIndex(idx)
-        self._update_translator_status()
+    # ------------------------------------------------------------------
+    # 千问 MT 连接检查
+    # ------------------------------------------------------------------
 
     @Slot()
     def _check_qwen_mt_connection(self) -> None:
-        """检查千问 MT API 连接"""
         from app.translate.qwen_mt import QwenMtTranslator
         from app.translate.base import QwenMtConfig
         try:
@@ -355,129 +205,9 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "连接失败", f"❌ {e}")
 
-    @Slot()
-    def _check_qwen_connection(self) -> None:
-        """检查通义千问 API 连接"""
-        from app.translate.qwen import QwenTranslator
-        from app.translate.base import QwenConfig
-        try:
-            cfg = QwenConfig(
-                api_key=self.txt_qwen_key.text().strip(),
-                model=self.txt_qwen_model.text().strip() or "qwen-flash",
-                base_url=self.txt_qwen_url.text().strip(),
-            )
-            translator = QwenTranslator(cfg)
-            translator.health_check()
-            QMessageBox.information(self, "成功", "✅ 通义千问 API 连接正常")
-        except Exception as e:
-            QMessageBox.critical(self, "连接失败", f"❌ {e}")
-            cfg = QwenConfig(
-                api_key=self.txt_qwen_key.text().strip(),
-                model=self.txt_qwen_model.text().strip() or "qwen-flash",
-            )
-            translator = QwenTranslator(cfg)
-            translator.health_check()
-            QMessageBox.information(self, "成功", "✅ 通义千问 API 连接正常")
-        except Exception as e:
-            QMessageBox.critical(self, "连接失败", f"❌ {e}")
-
-    @Slot()
-    def _check_ollama_connection(self) -> None:
-        """检查 Ollama 连接"""
-        from app.translate.base import OllamaConfig
-        from app.translate.ollama import OllamaTranslator
-        
-        try:
-            cfg = OllamaConfig(
-                base_url=self.txt_ollama_url.text().strip(),
-                model=self.txt_ollama_model.text().strip(),
-            )
-            translator = OllamaTranslator(cfg)
-            if translator.health_check():
-                QMessageBox.information(self, "成功", "✅ Ollama 连接正常，模型已加载")
-            else:
-                QMessageBox.warning(self, "失败", "❌ 无法连接 Ollama 或无可用模型")
-        except Exception as e:
-            QMessageBox.critical(self, "错误", f"❌ 检查失败：{e}")
-
-    def _update_translator_status(self) -> None:
-        """更新翻译状态标签"""
-        translator_type = self._label_to_translate_type(self.cmb_translator_type.currentText())
-        if translator_type == "offline":
-            self.lbl_tr_status.setText("翻译：离线模式（仅显示原文）")
-        elif translator_type == "ollama":
-            url = self.txt_ollama_url.text().strip()
-            model = self.txt_ollama_model.text().strip()
-            self.lbl_tr_status.setText(f"翻译：Ollama\n地址：{url}\n模型：{model}")
-        elif translator_type == "qwen_mt":
-            key = self.txt_qwen_mt_key.text()
-            key_preview = (key[:8] + "***") if key else "未设置"
-            model = self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash"
-            self.lbl_tr_status.setText(f"翻译：千问MT（专用翻译模型）\n模型：{model}\nAPI Key：{key_preview}")
-        elif translator_type == "qwen":
-            key = self.txt_qwen_key.text()
-            key_preview = (key[:8] + "***") if key else "未设置"
-            model = self.txt_qwen_model.text().strip() or "qwen-flash"
-            self.lbl_tr_status.setText(f"翻译：通义千问\n模型：{model}\nAPI Key：{key_preview}")
-        elif translator_type == "deepseek":
-            key_preview = self.txt_deepseek_key.text()
-            if key_preview:
-                key_preview = key_preview[:8] + "***"
-            self.lbl_tr_status.setText(f"翻译：DeepSeek API\nAPI 密钥：{key_preview or '未设置'}")
-        elif translator_type == "baidu":
-            app_id = self.txt_baidu_app_id.text().strip()
-            self.lbl_tr_status.setText(f"翻译：百度翻译\nAPP ID：{app_id or '未设置'}")
-
-    @Slot()
-    def _about(self) -> None:
-        QMessageBox.information(
-            self,
-            "关于 FFXIV 实时翻译",
-            "版本：2.0（改进版）\n\n"
-            "功能：\n"
-            "• ROI 屏幕截图\n"
-            "• Windows OCR 英文识别\n"
-            "• 支持多种翻译后端（Ollama/DeepSeek/百度/离线）\n"
-            "• 术语保护（人名/地名不翻译）\n"
-            "• 自动去重\n\n"
-            "使用流程：\n"
-            "1. 刷新窗口 → 绑定 FFXIV\n"
-            "2. 框选对白框 ROI\n"
-            "3. 配置翻译服务（可选）\n"
-            "4. 点击开始\n\n"
-            "GitHub：https://github.com/yourusername/ffxiv-translator",
-        )
-
-    @Slot()
-    def _show_quick_start(self) -> None:
-        QMessageBox.information(
-            self,
-            "快速开始",
-            "📖 快速开始指南\n\n"
-            "【无翻译模式】\n"
-            "1. 选择 \"离线（不翻译）\"\n"
-            "2. 框选 ROI → 开始\n"
-            "3. 只显示识别的英文\n\n"
-            "【本地翻译（推荐）】\n"
-            "前提：安装 Ollama\n"
-            "1. ollama pull qwen2.5:7b-instruct-q4_K_M\n"
-            "2. ollama serve\n"
-            "3. 程序中选择 \"Ollama（本地）\"\n"
-            "4. 点击 \"检查连接\" 验证\n"
-            "5. 框选 ROI → 开始\n\n"
-            "【DeepSeek API（快速）】\n"
-            "1. 访问 https://api.deepseek.com\n"
-            "2. 获取免费 API 密钥\n"
-            "3. 程序中选择 \"DeepSeek API\"\n"
-            "4. 粘贴 API 密钥\n"
-            "5. 框选 ROI → 开始\n\n"
-            "【百度翻译】\n"
-            "1. 访问 https://api.fanyi.baidu.com\n"
-            "2. 申请账号并获取 APP ID & 密钥\n"
-            "3. 程序中选择 \"百度翻译\"\n"
-            "4. 填入凭证\n"
-            "5. 框选 ROI → 开始",
-        )
+    # ------------------------------------------------------------------
+    # 窗口 / ROI
+    # ------------------------------------------------------------------
 
     @Slot()
     def _refresh_windows(self) -> None:
@@ -486,7 +216,7 @@ class MainWindow(QMainWindow):
         for w in wins:
             self.cmb_windows.addItem(f"[{w.hwnd}] {w.title}", userData=w.hwnd)
         if not wins:
-            self.cmb_windows.addItem("未找到 FFXIV 窗口（你可以先开游戏，或用窗口化/无边框）", userData=None)
+            self.cmb_windows.addItem("未找到 FFXIV 窗口（先开游戏，或用窗口化/无边框）", userData=None)
 
     @Slot()
     def _bind_selected_window(self) -> None:
@@ -509,63 +239,37 @@ class MainWindow(QMainWindow):
         self._roi_screen = RoiRect(r.x(), r.y(), r.width(), r.height())
         self.lbl_roi.setText(f"({r.x()}, {r.y()})  {r.width()} × {r.height()} px")
 
+    # ------------------------------------------------------------------
+    # 开始 / 暂停
+    # ------------------------------------------------------------------
+
     @Slot()
     def _start(self) -> None:
         if self._roi_screen is None:
             QMessageBox.warning(self, "需要 ROI", "请先框选对白框 ROI。")
             return
 
-        # 构建翻译器配置
-        translator_type = self._label_to_translate_type(self.cmb_translator_type.currentText())
-        translator_config = None
-        
-        if translator_type == "ollama":
-            translator_config = {
-                "base_url": self.txt_ollama_url.text().strip(),
-                "model": self.txt_ollama_model.text().strip(),
-            }
-        elif translator_type == "qwen_mt":
-            if not self.txt_qwen_mt_key.text().strip():
-                QMessageBox.warning(self, "配置不完整", "千问MT模式需要填写 API Key")
-                return
-            translator_config = {
-                "api_key": self.txt_qwen_mt_key.text().strip(),
-                "model": self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
-                "base_url": self.txt_qwen_mt_url.text().strip(),
-            }
-        elif translator_type == "qwen":
-            if not self.txt_qwen_key.text().strip():
-                QMessageBox.warning(self, "配置不完整", "通义千问模式需要填写 API Key")
-                return
-            translator_config = {
-                "api_key": self.txt_qwen_key.text().strip(),
-                "model": self.txt_qwen_model.text().strip() or "qwen-flash",
-                "base_url": self.txt_qwen_url.text().strip(),
-            }
-        elif translator_type == "deepseek":
-            if not self.txt_deepseek_key.text().strip():
-                QMessageBox.warning(self, "配置不完整", "DeepSeek 模式需要填写 API 密钥")
-                return
-            translator_config = {
-                "api_key": self.txt_deepseek_key.text().strip(),
-                "base_url": self.txt_deepseek_url.text().strip(),
-            }
-        elif translator_type == "baidu":
-            if not self.txt_baidu_app_id.text().strip() or not self.txt_baidu_secret.text().strip():
-                QMessageBox.warning(self, "配置不完整", "百度翻译模式需要填写 APP ID 和密钥")
-                return
-            translator_config = {
-                "app_id": self.txt_baidu_app_id.text().strip(),
-                "secret_key": self.txt_baidu_secret.text().strip(),
-            }
+        api_key = self.txt_qwen_mt_key.text().strip()
+        if not api_key:
+            QMessageBox.warning(self, "配置不完整", "请先填写千问 MT 的 API Key。")
+            return
 
         cfg = CaptureConfig(
             hwnd=self._hwnd,
-            roi_screen=(self._roi_screen.left, self._roi_screen.top, self._roi_screen.width, self._roi_screen.height),
+            roi_screen=(
+                self._roi_screen.left,
+                self._roi_screen.top,
+                self._roi_screen.width,
+                self._roi_screen.height,
+            ),
             fps=int(self.spn_fps.value()),
             ocr_interval_ms=int(self.spn_ocr_ms.value()),
-            translator_type=translator_type,
-            translator_config=translator_config,
+            translator_type="qwen_mt",
+            translator_config={
+                "api_key": api_key,
+                "model": self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
+                "base_url": self.txt_qwen_mt_url.text().strip(),
+            },
         )
         self._worker.start_capture(cfg)
         self.btn_start.setEnabled(False)
@@ -576,6 +280,10 @@ class MainWindow(QMainWindow):
         self._worker.stop_capture()
         self.btn_start.setEnabled(True)
         self.btn_pause.setEnabled(False)
+
+    # ------------------------------------------------------------------
+    # 日志
+    # ------------------------------------------------------------------
 
     @Slot(str)
     def _on_new_line(self, line: str) -> None:
@@ -588,7 +296,6 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _export_log(self) -> None:
-        """将当前日志导出为 .txt 文件"""
         content = self.txt_log.toPlainText()
         if not content.strip():
             QMessageBox.information(self, "日志为空", "当前没有可导出的记录。")
@@ -608,29 +315,22 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "错误", f"❌ 导出失败：{e}")
 
+    # ------------------------------------------------------------------
+    # 配置持久化
+    # ------------------------------------------------------------------
+
     def _collect_config(self) -> None:
-        """将 UI 中的最新值写回配置对象（不保存到磁盘）。"""
-        self._config.translator_type = self._label_to_translate_type(self.cmb_translator_type.currentText())
+        self._config.translator_type = "qwen_mt"
         self._config.default_fps = int(self.spn_fps.value())
         self._config.default_ocr_interval_ms = int(self.spn_ocr_ms.value())
         self._config.window_width = self.width()
         self._config.window_height = self.height()
-        self._config.ollama.base_url = self.txt_ollama_url.text().strip()
-        self._config.ollama.model = self.txt_ollama_model.text().strip()
         self._config.qwen_mt.api_key = self.txt_qwen_mt_key.text().strip()
         self._config.qwen_mt.model = self.txt_qwen_mt_model.text().strip()
         self._config.qwen_mt.base_url = self.txt_qwen_mt_url.text().strip()
-        self._config.qwen.api_key = self.txt_qwen_key.text().strip()
-        self._config.qwen.model = self.txt_qwen_model.text().strip()
-        self._config.qwen.base_url = self.txt_qwen_url.text().strip()
-        self._config.deepseek.api_key = self.txt_deepseek_key.text().strip()
-        self._config.deepseek.base_url = self.txt_deepseek_url.text().strip()
-        self._config.baidu.app_id = self.txt_baidu_app_id.text().strip()
-        self._config.baidu.secret_key = self.txt_baidu_secret.text().strip()
 
     @Slot()
     def _save_config(self) -> None:
-        """保存配置到文件"""
         try:
             self._collect_config()
             self._config.save_to_file()
@@ -641,7 +341,6 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event) -> None:  # noqa: N802
         try:
             self._worker.stop_capture()
-            # 静默自动保存配置，保留用户上次的设置
             try:
                 self._collect_config()
                 self._config.save_to_file()
@@ -649,3 +348,21 @@ class MainWindow(QMainWindow):
                 pass
         finally:
             super().closeEvent(event)
+
+    # ------------------------------------------------------------------
+    # 关于
+    # ------------------------------------------------------------------
+
+    @Slot()
+    def _about(self) -> None:
+        QMessageBox.information(
+            self,
+            "关于 FFXIV 实时翻译",
+            "版本：2.1\n\n"
+            "使用流程：\n"
+            "1. 刷新窗口 → 绑定 FFXIV\n"
+            "2. 框选对白框 ROI\n"
+            "3. 填写千问 MT API Key\n"
+            "4. 点击开始\n\n"
+            "翻译引擎：Qwen-MT（阿里云千问专用翻译模型）",
+        )

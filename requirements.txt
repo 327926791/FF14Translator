@@ -3,7 +3,13 @@ mss
 Pillow
 httpx
 rapidfuzz
-winsdk
 pydantic>=2.0
 platformdirs
-
+# Windows OCR — 现代 winrt 包（Python 3.12+ 原生支持）
+winrt-Windows.Media.Ocr
+winrt-Windows.Globalization
+winrt-Windows.Graphics.Imaging
+winrt-Windows.Storage.Streams
+winrt-Windows.Foundation
+# 旧版 winsdk 作为回退（可选）
+winsdk
