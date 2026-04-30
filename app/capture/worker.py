@@ -222,7 +222,8 @@ class CaptureWorker(QThread):
                             self.status.emit(f"翻译失败（将只显示原文）：{e}")
                             zh = None
                     if zh:
-                        out = f"{out}\n  -> {zh}"
+                        zh_out = f"{speaker}：{zh}" if speaker else zh
+                        out = f"{out}\n  -> {zh_out}"
 
                 self.new_line.emit(out)
                 time.sleep(frame_sleep)
