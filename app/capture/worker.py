@@ -157,13 +157,18 @@ class CaptureWorker(QThread):
                 try:
                     left, top, width, height = self._cfg.roi_screen
                     img = capturer.grab(ScreenRect(left=left, top=top, width=width, height=height))
-                    # ---- 图像差异过滤（省 OCR + API）----
+                    # ── 1. 图像差异过滤（相邻帧相同 → 省 OCR + API） ──
                     img_gray = img.convert("L")
                     if last_img_gray is not None and _images_similar(img_gray, last_img_gray):
                         time.sleep(frame_sleep)
                         continue
+                    # ── 2. 亮度过滤（画面过暗说明对话框不存在） ──────────
+                    if not _has_text_region(img_gray):
+                        last_img_gray = img_gray
+                        time.sleep(frame_sleep)
+                        continue
                     last_img_gray = img_gray
-                    # ------------------------------------
+                    # ─────────────────────────────────────────────────────
                     img_pp = _preprocess_for_ocr(img)
                     text = loop.run_until_complete(ocr.recognize_pil(img_pp))
                 except Exception as e:
@@ -172,7 +177,8 @@ class CaptureWorker(QThread):
                     continue
 
                 text = _normalize_ocr_text(text)
-                if not text:
+                # ── 3. 文字长度过滤（杂字噪声 / 无实质内容） ─────────────
+                if not _is_meaningful_text(text):
                     time.sleep(frame_sleep)
                     continue
 
@@ -254,48 +260,104 @@ def _images_similar(
     return stddev < threshold
 
 
+import re as _re
+
+# FF14 角色名格式：1-3 个首字母大写的词（允许 ' 和 - ），如 Zero / Y'shtola / G'raha Tia
+_NAME_PREFIX_RE = _re.compile(
+    r"^((?:[A-Z][A-Za-z'''\-]{0,20})(?:\s+[A-Z][A-Za-z'''\-]{0,20}){0,2})"
+    r"\s+([A-Z\"].{8,})$"
+)
+
+
 def _normalize_ocr_text(text: str) -> str:
     """规范化 OCR 输出，保留换行以便区分说话人名牌和正文。"""
     s = (text or "").replace("\r", "\n")
     lines = [ln.strip() for ln in s.split("\n")]
     lines = [ln for ln in lines if ln]
-    # 保留换行：调用方据此识别说话人/正文分隔
     return "\n".join(lines).strip()
 
 
 def _parse_speaker_line(text: str) -> tuple[str, str]:
     """
-    从 OCR 文本中提取说话人和台词。
+    从 OCR 文本中提取说话人和台词，兼容三种 FF14 格式：
 
-    FF14 对话框布局：
-      - 第一行：说话人名牌（独立 UI，通常较短，无句末标点）
-      - 后续行：台词正文
-
-    也兼容 "Speaker: line" 单行格式（冒号分隔）。
+    1. 多行（名牌独立一行，最常见）
+         Zero
+         But for those of us abandoned by death...
+    2. 单行冒号格式（部分字体/语言会有冒号）
+         Thancred: Stand back.
+    3. 单行无冒号（OCR 将名牌和正文合并到同一行）
+         Zero But for those of us abandoned by death...
     """
     lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
     if not lines:
         return "", ""
 
+    # ── 格式 1：多行，首行是说话人名牌 ──────────────────────────────────
     if len(lines) >= 2:
         first = lines[0]
         body = " ".join(lines[1:])
-        # 名牌判断：短（≤35字符）、不以句末标点结尾、正文比名牌长
         if (
             1 <= len(first) <= 35
-            and not first[-1] in ".!?,;…"
+            and first[-1] not in ".!?,;…"
             and len(body) >= len(first)
         ):
             return first, body
 
-    # 单行：尝试冒号分隔
+    # ── 格式 2 / 3：单行处理 ─────────────────────────────────────────────
     single = " ".join(lines)
+
+    # 格式 2：有冒号
     for sep in (":", "："):
         if sep in single:
             left, right = single.split(sep, 1)
-            speaker = left.strip()
-            line = right.strip()
-            if 1 <= len(speaker) <= 35 and line:
-                return speaker, line
+            spk = left.strip()
+            body = right.strip()
+            if 1 <= len(spk) <= 35 and body:
+                return spk, body
+
+    # 格式 3：无冒号，尝试正则识别"名字 + 正文"模式
+    m = _NAME_PREFIX_RE.match(single)
+    if m:
+        spk, body = m.group(1).strip(), m.group(2).strip()
+        # 额外校验：名字部分不应包含句子结构特征
+        if len(spk) <= 30 and spk[-1] not in ".!?,;":
+            return spk, body
 
     return "", single
+
+
+def _has_text_region(img_gray: "Image.Image", light_ratio_threshold: float = 0.15) -> bool:
+    """
+    判断灰度截图中是否可能有对话框文字。
+
+    FF14 对话框背景是明亮的米色/白色；
+    若画面中亮色像素（>180）占比低于阈值，说明没有对话框，直接跳过。
+    阈值 0.15 = 亮色像素不足 15% → 跳过 OCR。
+    """
+    stat = ImageStat.Stat(img_gray)
+    mean_brightness: float = stat.mean[0]
+    # 均值亮度低于 60（几乎全黑，如过场动画、Loading）→ 跳过
+    if mean_brightness < 60:
+        return False
+    # 统计亮色像素占比（粗略判断是否存在对话框区域）
+    total = img_gray.width * img_gray.height
+    bright = sum(1 for v in img_gray.getdata() if v > 180)
+    return (bright / total) >= light_ratio_threshold
+
+
+def _is_meaningful_text(text: str, min_chars: int = 8, min_words: int = 2) -> bool:
+    """
+    判断 OCR 结果是否包含有意义的对话内容。
+
+    过滤条件：
+    - 去掉空白后字符数 < min_chars  → 杂字噪声
+    - 有效单词数 < min_words         → 孤立字符
+    """
+    if not text:
+        return False
+    stripped = text.strip()
+    if len(stripped) < min_chars:
+        return False
+    words = [w for w in stripped.split() if len(w) >= 2]
+    return len(words) >= min_words
