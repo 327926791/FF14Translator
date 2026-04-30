@@ -1,62 +1,137 @@
-# FFXIV 术语保护表 - 特殊术语和概念
+# FFXIV 专有名词词库 - 格式：英文 = 官方简中译名
 
-# 宇宙观念
-Ascian
-Calamity
-Aether
-Tempering
-Primals
-Hypertuned
-The Tetrarch
-Dynamis
-Aetherflow
+# ===== 世界观核心 =====
+Ascian = 阿辛人
+Unsundered = 未分割者
+Calamity = 灾厄
+Umbral Calamity = 灵灾
+Rejoining = 重合
+Aether = 以太
+Aetheryte = 以太之光
+Aetherflow = 以太超流
+Lifestream = 生命流
+Dynamis = 因纳米斯
+Tempering = 蛮化
+The Echo = 回声
+Echo = 回声
+Blessing of Light = 光之祝福
+Light Warden = 光之守护者
+Sin Eater = 罪喰者
+Lightwarden = 光之守护者
+Final Days = 终末
+Ardor = 燃烧的炽热
 
-# 游戏机制
-Echo
-Soul Crystal
-Limit Break
-Garlond
-Allagan
-Magitek
-Resonant
-Spell
+# ===== 召唤兽 / 蛮神 =====
+Ifrit = 伊弗利特
+Titan = 泰坦
+Garuda = 迦楼罗
+Leviathan = 利维亚桑
+Ramuh = 雷姆
+Shiva = 希瓦
+Bismarck = 俾斯麦
+Ravana = 拉瓦纳
+Nidhogg = 尼德霍格
+Sephirot = 色菲罗斯
+Sophia = 索菲娅
+Zurvan = 祖尔万
+Susano = 须佐男
+Lakshmi = 拉克希米
+Shinryu = 神龙
+Tsukuyomi = 月读
+Byakko = 白虎
+Suzaku = 朱雀
+Seiryu = 青龙
+Bahamut = 巴哈姆特
+Phoenix = 不死鸟
+Zodiark = 佐迪亚克
+Alexander = 亚历山大
+Emerald Weapon = 绿宝石神兵
+Diamond Weapon = 钻石神兵
+Ruby Weapon = 红宝石神兵
+Endsinger = 终末之歌者
+Golbez = 高尔贝兹
+Zeromus = 泽罗穆斯
+Barbariccia = 芭芭莉西亚
+Rubicante = 卢比坎特
 
-# 势力组织
-Garlean Empire
-Scions of the Seventh Dawn
-The Brass Blades
-Ul'dah Monetarists
-Syndicate
-Twin Adders
-Order of the Twin Adders
-Immortal Flames
-Maelstrom
+# ===== 职业 =====
+Paladin = 骑士
+Dark Knight = 暗黑骑士
+Gunbreaker = 绝枪战士
+Warrior = 战士
+White Mage = 白魔法师
+Scholar = 学者
+Astrologian = 占星术士
+Sage = 贤者
+Dragoon = 龙骑士
+Monk = 武僧
+Samurai = 武士
+Ninja = 忍者
+Reaper = 钐镰客
+Viper = 蝰蛇剑士
+Bard = 诗人
+Machinist = 机工士
+Dancer = 舞者
+Black Mage = 黑魔法师
+Summoner = 召唤师
+Red Mage = 赤魔法师
+Blue Mage = 青魔法师
+Pictomancer = 绘灵法师
+Limit Break = 极限技
+Soul Crystal = 灵魂水晶
+Job Stone = 职业石
 
-# 种族
-Hyur
-Elezen
-Lalafell
-Roegadyn
-Miqo'te
-Au Ra
-Viera
-Hrothgar
+# ===== 种族 =====
+Hyur = 人族
+Elezen = 精灵族
+Lalafell = 拉拉菲尔族
+Roegadyn = 鲁加族
+Miqo'te = 猫魅族
+Au Ra = 敖龙族
+Viera = 维埃拉族
+Hrothgar = 赫罗斯加族
+Midlander = 中原之民
+Highlander = 高原之民
+Wildwood = 林原之民
+Duskwight = 暮晓之民
+Plainsfolk = 平原之民
+Dunesfolk = 沙丘之民
+Sea Wolf = 海狼族
+Hellsguard = 护火族
+Raen = 月之民
+Xaela = 日之民
 
-# 职业相关
-Paladin
-Warrior
-Dragoon
-Monk
-Samurai
-Ninja
-Bard
-Machinist
-Dancer
-White Mage
-Scholar
-Astrologian
-Sage
-Black Mage
-Summoner
-Red Mage
-Blue Mage
+# ===== 势力 / 组织 =====
+Scions of the Seventh Dawn = 黎明之间
+Garlean Empire = 迦马兰帝国
+Garleans = 迦马兰人
+Immortal Flames = 不灭队
+Maelstrom = 黑涡团
+Order of the Twin Adders = 双蛇党
+Twin Adders = 双蛇党
+Brass Blades = 黄铜刀锋
+Syndicate = 议员会
+Crystal Braves = 水晶勇士
+Circle of Knowing = 知识之环
+Sharlayan = 夏莱安
+Ilsabard Contingent = 伊尔萨巴德遣队
+Warrior of Darkness = 暗之战士
+
+# ===== 扩展包 =====
+A Realm Reborn = 重生之境
+Heavensward = 苍穹之禁城
+Stormblood = 红莲之狂潮
+Shadowbringers = 暗影之逆焰
+Endwalker = 晓月之终途
+Dawntrail = 金曦之遗辉
+
+# ===== 游戏系统（可能出现在台词里的词） =====
+Grand Company = 大国防联军
+Free Company = 部队
+Party Finder = 招募板
+Duty = 任务
+Alliance = 同盟
+Relic Weapon = 传说武器
+Phantom Weapons = 幻想兵器
+Resistance Weapon = 抵抗军武器
+Tomestone = 神典石

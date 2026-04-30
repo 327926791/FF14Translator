@@ -1,35 +1,89 @@
-# FFXIV 术语保护表 - 地名和场景
+# FFXIV 地名词库 - 格式：英文 = 官方简中译名
 
-# 主城区
-Limsa Lominsa
-Ul'dah
-Gridania
-Uldah
-The Waking Sands
+# ===== 星球 / 大陆 =====
+Hydaelyn = 海德林
+Etheirys = 以特里斯
+Eorzea = 艾欧泽亚
+Aldenard = 阿尔德纳德
+Ilsabard = 伊尔萨巴德
+Othard = 奥萨德
+Meracydia = 梅拉西迪亚
+The Far East = 远东
+The New World = 新世界
+Tural = 图拉尔
 
-# 地区
-Eorzea
-Aldenard
-Coerthas
-The Sea of Clouds
-Othard
-The Far East
-The First
-The Crystarium
+# ===== 主要都市 =====
+Limsa Lominsa = 利姆萨·罗敏萨
+Ul'dah = 乌尔达哈
+Gridania = 格里达尼亚
+Ishgard = 伊修加德
+Kugane = 玖鬼禰
+The Crystarium = 水晶都
+Crystarium = 水晶都
+Eulmore = 弥尔多
+Old Sharlayan = 旧夏莱安
+Radz-at-Han = 拉兹-阿特-汉
+Solution Nine = 解法区九号
 
-# 副本/任务区域
-The Thousand Maws of Toto-Rak
-Castrum Meridianum
-The Praetorium
-Baelsar's Wall
-The Royal Menagerie
-Omega
-Rak'tika Greatwood
-Ahm Araeng
+# ===== ARR 区域 =====
+La Noscea = 拉诺西亚
+The Black Shroud = 黑衣森林
+Thanalan = 萨纳兰
+Coerthas = 柯尔萨斯
+Mor Dhona = 摩杜纳
 
-# 地标
-Crystal Tower
-The Under
-Gold Saucer
-Idyllshire
-Kugane
+# ===== Heavensward =====
+The Sea of Clouds = 云海
+Abalathia's Spine = 阿巴拉提亚山脉
+Dravania = 德拉瓦尼亚
+Azys Lla = 阿济兹拉
+The Churning Mists = 浮雾峡谷
+Dravanian Hinterlands = 德拉瓦尼亚腹地
+Dravanian Forelands = 德拉瓦尼亚前地
+
+# ===== Stormblood =====
+The Fringes = 外围地带
+The Peaks = 高地
+The Lochs = 湖区
+The Ruby Sea = 红玉海
+Yanxia = 燕夏
+The Azim Steppe = 阿兹姆大草原
+
+# ===== Shadowbringers / The First =====
+The First = 第一世界
+Il Mheg = 伊尔美格
+The Rak'tika Greatwood = 拉克提卡大森林
+Ahm Araeng = 阿姆·阿雷安格
+The Tempest = 暴风之海
+Lakeland = 湖陆
+Kholusia = 科卢西亚
+
+# ===== Endwalker =====
+Labyrinthos = 迷宫境
+Thavnair = 萨夫纳尔
+Garlemald = 格尔莫德
+Mare Lamentorum = 悲叹之海
+Ultima Thule = 阿尔克提卡
+Elpis = 厄尔庇斯
+
+# ===== Dawntrail =====
+Urqopacha = 乌尔科帕查
+Kozama'uka = 科萨马乌卡
+Yak T'el = 亚克·特尔
+Shaaloani = 沙阿拉尼
+Heritage Found = 遗迹之地
+Living Memory = 活着的记忆
+
+# ===== 副本 / 地标 =====
+Castrum Meridianum = 正午要塞
+The Praetorium = 古罗执政院
+The Waking Sands = 觉醒之沙
+The Rising Stones = 晨曦之石
+Baelsar's Wall = 贝尔萨之壁
+Crystal Tower = 水晶塔
+Gold Saucer = 黄金碟
+Idyllshire = 田园境
+The Coils of Bahamut = 巴哈姆特大迷宫
+Binding Coil of Bahamut = 束缚之巴哈姆特
+The Void = 虚空
+Omega = 欧米茄

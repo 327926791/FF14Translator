@@ -1,36 +1,97 @@
-# FFXIV 术语保护表 - 人名
-# 一行一个，长词优先
+# FFXIV 人名词库 - 格式：英文 = 官方简中译名
+# 只写一列 = 保持英文原样（用于无中文对应的名字）
 
-# 主角相关
-Warrior of Light
-Alphinaud
-Alisaie
-Tataru
-Urianger
-Thancred
-Y'shtola
-Krile
-Moenbryda
-Minfilia
+# ===== 主角队伍 / Scions =====
+Warrior of Light = 光之战士
+Alphinaud Leveilleur = 阿尔菲诺·勒韦勒
+Alisaie Leveilleur = 阿莉塞·勒韦勒
+Alphinaud = 阿尔菲诺
+Alisaie = 阿莉塞
+Tataru Taru = 塔塔露·塔露
+Tataru = 塔塔露
+Y'shtola Rhul = 雅·修特拉·鲁尔
+Y'shtola = 雅·修特拉
+Thancred Waters = 赛昂瑟德·沃特斯
+Thancred = 赛昂瑟德
+Urianger Augurelt = 乌里安格·奥古莱特
+Urianger = 乌里安格
+Krile Mayer Baldesion = 克里尔·梅尔·巴尔德希昂
+Krile = 克里尔
+G'raha Tia = 格拉哈·提亚
+Ryne = 莉纳
+Gaia = 盖亚
+Erenville = 伊伦维尔
 
-# 势力首领
-Raubahn
-Kan-E-Senna
-Nanamo
+# ===== ARR 重要角色 =====
+Minfilia Warde = 明菲利亚·沃德
+Minfilia = 明菲利亚
+Moenbryda = 门布里达
+Papalymo = 帕帕利莫
+Yda = 伊达
+Louisoix Leveilleur = 路易索瓦·勒韦勒
+Louisoix = 路易索瓦
 
-# 反派
-Lahabrea
-Elidibus
-Igeyorhm
-Nabriales
-Thordan
-Nidhogg
+# ===== 三大都市领导人 =====
+Sultana Nanamo Ul Namo = 苏丹娜纳娜莫·乌尔·纳莫
+Nanamo = 纳娜莫
+Raubahn Aldynn = 劳巴恩·奥尔丁
+Raubahn = 劳巴恩
+Kan-E-Senna = 坎·艾·仙纳
+Merlwyb Bloefhiswyn = 麦尔维布·布洛菲斯文
+Merlwyb = 麦尔维布
+Aymeric de Borel = 艾梅里克·德·博雷尔
+Aymeric = 艾梅里克
 
-# 其他重要角色
-Haurchefant
-Aymeric
-Estinien
-Jacintha
-Lyse
-Raubahn
-Sultana Nanamo
+# ===== 天穹圣殿骑士团 =====
+Haurchefant Greystone = 奥谢冯·格雷斯通
+Haurchefant = 奥谢冯
+Estinien Wyrmblood = 伊斯蒂尼安·龙血
+Estinien = 伊斯蒂尼安
+Ysayle = 伊萨尔
+
+# ===== 龙族 =====
+Nidhogg = 尼德霍格
+Hraesvelgr = 赫拉斯瓦尔格
+
+# ===== Ascian / 阿辛人 =====
+Emet-Selch = 艾梅特-塞尔克
+Elidibus = 埃利迪布斯
+Lahabrea = 拉哈布雷亚
+Nabriales = 纳布里阿勒斯
+Igeyorhm = 伊耶罗姆
+Fandaniel = 凡达尼尔
+Hermes = 赫耳墨斯
+Venat = 维纳特
+Meteion = 梅蒂翁
+
+# ===== 帝国 =====
+Zenos yae Galvus = 泽诺斯·亚艾·加尔伏斯
+Zenos = 泽诺斯
+Gaius van Baelsar = 盖乌斯·范·贝尔沙
+Gaius = 盖乌斯
+Nero tol Scaeva = 内罗·托尔·斯卡埃瓦
+Nero = 内罗
+
+# ===== Shadowbringers =====
+Ardbert = 阿尔德贝特
+Vauthry = 沃斯利
+Ran'jit = 兰吉特
+
+# ===== Endwalker =====
+Themis = 忒弥斯
+
+# ===== Dawntrail =====
+Wuk Lamat = 乌克·拉玛特
+Koana = 科阿纳
+Gulool Ja Ja = 古鲁尔·贾贾
+Zoraal Ja = 佐拉尔·贾
+
+# ===== 常驻 NPC =====
+Hildibrand Manderville = 希尔迪布兰德·曼德维尔
+Hildibrand = 希尔迪布兰德
+Godbert Manderville = 戈德贝特·曼德维尔
+Rowena = 罗维娜
+Cid nan Garlond = 希德·南·卡尔隆德
+Cid = 希德
+Biggs = 比格斯
+Wedge = 维吉

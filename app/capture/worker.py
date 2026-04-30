@@ -12,7 +12,7 @@ from PIL import Image, ImageEnhance, ImageOps
 from rapidfuzz import fuzz
 
 from app.capture.screen_capture import ScreenCapturer, ScreenRect
-from app.glossary.glossary import Glossary, protect_terms, restore_terms
+from app.glossary.glossary import Glossary, detect_proper_nouns
 from app.ocr.windows_ocr import WindowsOcr
 from app.translate.base import (
     BaseTranslator,
@@ -26,9 +26,6 @@ from app.translate.factory import TranslatorFactory
 
 
 _TRANSLATION_CACHE_MAX = 200
-
-# 这些后端不支持 system prompt，无法使用占位符术语保护
-_NO_PLACEHOLDER_BACKENDS = frozenset({"baidu", "qwen_mt"})
 
 
 class _LRUCache:
@@ -138,10 +135,13 @@ class CaptureWorker(QThread):
             self.status.emit(f"翻译器已加载：{self._cfg.translator_type}")
 
         translation_cache = _LRUCache()
-        use_placeholder = self._cfg.translator_type not in _NO_PLACEHOLDER_BACKENDS
 
         fps = max(1, int(self._cfg.fps))
         frame_sleep = 1.0 / fps
+
+        # 预构建词库词对（长词优先）和词集合（用于专有名词去重）
+        glossary_pairs = glossary.term_pairs()
+        known_en: set[str] = {en for en, _ in glossary_pairs}
 
         self.status.emit("捕获线程已启动")
 
@@ -186,10 +186,21 @@ class CaptureWorker(QThread):
                     zh = translation_cache.get(cache_key)
                     if zh is None:
                         try:
-                            if use_placeholder:
-                                protected, mapping = protect_terms(line, glossary.all_terms())
-                                zh = translator.translate(speaker or "", protected)
-                                zh = restore_terms(zh, mapping)
+                            # 词库词对：给出正确官方译名
+                            # 额外检测文本中未收录的大写专有名词 → 保留原文
+                            extra = detect_proper_nouns(line, known_terms=known_en)
+                            extra_pairs = [(w, w) for w in extra]
+                            all_pairs = glossary_pairs + extra_pairs
+
+                            if hasattr(translator, "translate") and all_pairs:
+                                import inspect
+                                sig = inspect.signature(translator.translate)
+                                if "term_pairs" in sig.parameters:
+                                    zh = translator.translate(
+                                        speaker or "", line, term_pairs=all_pairs
+                                    )
+                                else:
+                                    zh = translator.translate(speaker or "", line)
                             else:
                                 zh = translator.translate(speaker or "", line)
                             translation_cache.put(cache_key, zh)
