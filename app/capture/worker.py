@@ -255,18 +255,47 @@ def _images_similar(
 
 
 def _normalize_ocr_text(text: str) -> str:
+    """规范化 OCR 输出，保留换行以便区分说话人名牌和正文。"""
     s = (text or "").replace("\r", "\n")
     lines = [ln.strip() for ln in s.split("\n")]
     lines = [ln for ln in lines if ln]
-    return " ".join(lines).strip()
+    # 保留换行：调用方据此识别说话人/正文分隔
+    return "\n".join(lines).strip()
 
 
 def _parse_speaker_line(text: str) -> tuple[str, str]:
+    """
+    从 OCR 文本中提取说话人和台词。
+
+    FF14 对话框布局：
+      - 第一行：说话人名牌（独立 UI，通常较短，无句末标点）
+      - 后续行：台词正文
+
+    也兼容 "Speaker: line" 单行格式（冒号分隔）。
+    """
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    if not lines:
+        return "", ""
+
+    if len(lines) >= 2:
+        first = lines[0]
+        body = " ".join(lines[1:])
+        # 名牌判断：短（≤35字符）、不以句末标点结尾、正文比名牌长
+        if (
+            1 <= len(first) <= 35
+            and not first[-1] in ".!?,;…"
+            and len(body) >= len(first)
+        ):
+            return first, body
+
+    # 单行：尝试冒号分隔
+    single = " ".join(lines)
     for sep in (":", "："):
-        if sep in text:
-            left, right = text.split(sep, 1)
+        if sep in single:
+            left, right = single.split(sep, 1)
             speaker = left.strip()
             line = right.strip()
-            if 1 <= len(speaker) <= 32 and line:
+            if 1 <= len(speaker) <= 35 and line:
                 return speaker, line
-    return "", text.strip()
+
+    return "", single
