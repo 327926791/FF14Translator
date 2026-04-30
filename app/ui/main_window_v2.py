@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QComboBox,
+    QDialog,
     QFileDialog,
     QFormLayout,
     QGroupBox,
@@ -500,13 +501,13 @@ class MainWindow(QMainWindow):
     @Slot()
     def _choose_roi(self) -> None:
         dlg = RoiSelectDialog(self)
-        if dlg.exec() != dlg.Accepted:
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         r = dlg.selected_rect()
         if r is None:
             return
         self._roi_screen = RoiRect(r.x(), r.y(), r.width(), r.height())
-        self.lbl_roi.setText(f"screen: ({r.x()},{r.y()}) {r.width()}x{r.height()}")
+        self.lbl_roi.setText(f"({r.x()}, {r.y()})  {r.width()} × {r.height()} px")
 
     @Slot()
     def _start(self) -> None:
