@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 import time
 from collections import deque, OrderedDict
 from dataclasses import dataclass
@@ -95,17 +96,27 @@ class CaptureWorker(QThread):
         super().__init__()
         self._running = False
         self._cfg: Optional[CaptureConfig] = None
+        # 用 Event 实现可靠停止：set() = 停止信号，clear() = 允许运行
+        self._stop_event = threading.Event()
 
     def start_capture(self, cfg: CaptureConfig) -> None:
+        # 先发停止信号，等旧线程退出（最多 5 秒）
         if self.isRunning():
             self._running = False
-            self.wait(3000)
+            self._stop_event.set()
+            self.wait(5000)
+            if self.isRunning():
+                # 线程仍未退出（API 调用超时），强制终止（Qt 层面）
+                self.terminate()
+                self.wait(1000)
+        self._stop_event.clear()
         self._cfg = cfg
         self._running = True
         self.start()
 
     def stop_capture(self) -> None:
         self._running = False
+        self._stop_event.set()   # 唤醒任何正在 sleep 的等待
 
     def run(self) -> None:  # noqa: N802
         if self._cfg is None:
@@ -146,11 +157,17 @@ class CaptureWorker(QThread):
 
         self.status.emit("捕获线程已启动")
 
+        def interruptible_sleep(seconds: float) -> None:
+            """可被 stop_event 提前唤醒的 sleep，替代 time.sleep。"""
+            self._stop_event.wait(timeout=seconds)
+
         try:
             while self._running:
+                if self._stop_event.is_set():
+                    break
                 now = time.monotonic()
                 if (now - last_ocr_at) * 1000.0 < float(self._cfg.ocr_interval_ms):
-                    time.sleep(frame_sleep)
+                    interruptible_sleep(frame_sleep)
                     continue
                 last_ocr_at = now
 
@@ -160,12 +177,12 @@ class CaptureWorker(QThread):
                     # ── 1. 图像差异过滤（相邻帧相同 → 省 OCR + API） ──
                     img_gray = img.convert("L")
                     if last_img_gray is not None and _images_similar(img_gray, last_img_gray):
-                        time.sleep(frame_sleep)
+                        interruptible_sleep(frame_sleep)
                         continue
                     # ── 2. 亮度过滤（画面过暗说明对话框不存在） ──────────
                     if not _has_text_region(img_gray):
                         last_img_gray = img_gray
-                        time.sleep(frame_sleep)
+                        interruptible_sleep(frame_sleep)
                         continue
                     last_img_gray = img_gray
                     # ─────────────────────────────────────────────────────
@@ -173,20 +190,20 @@ class CaptureWorker(QThread):
                     text = loop.run_until_complete(ocr.recognize_pil(img_pp))
                 except Exception as e:
                     self.status.emit(f"OCR/截图失败：{e}")
-                    time.sleep(0.5)
+                    interruptible_sleep(0.5)
                     continue
 
                 text = _normalize_ocr_text(text)
                 # ── 3. 文字长度过滤（杂字噪声 / 无实质内容） ─────────────
                 if not _is_meaningful_text(text):
-                    time.sleep(frame_sleep)
+                    interruptible_sleep(frame_sleep)
                     continue
 
                 if last_text_norm and fuzz.ratio(text, last_text_norm) >= 92:
-                    time.sleep(frame_sleep)
+                    interruptible_sleep(frame_sleep)
                     continue
                 if any(fuzz.ratio(text, t) >= 92 for t in recent_norm):
-                    time.sleep(frame_sleep)
+                    interruptible_sleep(frame_sleep)
                     continue
 
                 recent_norm.append(text)
@@ -195,10 +212,10 @@ class CaptureWorker(QThread):
                 speaker, line = _parse_speaker_line(text)
                 out = f"{speaker}：{line}" if speaker else line
 
-                if translator is not None:
+                if translator is not None and self._running and not self._stop_event.is_set():
                     cache_key = f"{speaker}\x00{line}"
                     zh = translation_cache.get(cache_key)
-                    if zh is None:
+                    if zh is None and self._running and not self._stop_event.is_set():
                         try:
                             # 词库词对：给出正确官方译名
                             # 额外检测文本中未收录的大写专有名词 → 保留原文
@@ -226,7 +243,7 @@ class CaptureWorker(QThread):
                         out = f"{out}\n  -> {zh_out}"
 
                 self.new_line.emit(out)
-                time.sleep(frame_sleep)
+                interruptible_sleep(frame_sleep)
         finally:
             loop.close()
             self.status.emit("捕获线程已停止")
