@@ -70,6 +70,9 @@ class QwenTranslator(BaseTranslator):
             "messages": messages,
             "temperature": 0.3,
             "max_tokens": 256,
+            # 关闭 Qwen3 思维链推理：翻译无需推理，开启会大幅拖慢速度并浪费 token。
+            # DashScope OpenAI 兼容接口下用 enable_thinking=false 关闭。
+            "enable_thinking": False,
         }
 
         try:
