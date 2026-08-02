@@ -191,17 +191,17 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _check_qwen_mt_connection(self) -> None:
-        from app.translate.qwen_mt import QwenMtTranslator
-        from app.translate.base import QwenMtConfig
+        from app.translate.qwen import QwenTranslator
+        from app.translate.base import QwenConfig
         try:
-            cfg = QwenMtConfig(
+            cfg = QwenConfig(
                 api_key=self.txt_qwen_mt_key.text().strip(),
-                model=self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
+                model=self.txt_qwen_mt_model.text().strip() or "qwen-flash",
                 base_url=self.txt_qwen_mt_url.text().strip(),
             )
-            translator = QwenMtTranslator(cfg)
+            translator = QwenTranslator(cfg)
             translator.health_check()
-            QMessageBox.information(self, "成功", "✅ 千问 MT API 连接正常")
+            QMessageBox.information(self, "成功", "✅ 千问 API 连接正常")
         except Exception as e:
             QMessageBox.critical(self, "连接失败", f"❌ {e}")
 
@@ -264,10 +264,10 @@ class MainWindow(QMainWindow):
             ),
             fps=int(self.spn_fps.value()),
             ocr_interval_ms=int(self.spn_ocr_ms.value()),
-            translator_type="qwen_mt",
+            translator_type="qwen",
             translator_config={
                 "api_key": api_key,
-                "model": self.txt_qwen_mt_model.text().strip() or "qwen-mt-flash",
+                "model": self.txt_qwen_mt_model.text().strip() or "qwen-flash",
                 "base_url": self.txt_qwen_mt_url.text().strip(),
             },
         )
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _collect_config(self) -> None:
-        self._config.translator_type = "qwen_mt"
+        self._config.translator_type = "qwen"
         self._config.default_fps = int(self.spn_fps.value())
         self._config.default_ocr_interval_ms = int(self.spn_ocr_ms.value())
         self._config.window_width = self.width()
